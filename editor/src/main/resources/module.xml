@@ -1,10 +1,11 @@
 <?xml version = "1.0"?>
 <module>
-    <id>ext.graphics</id>
-    <name>Nexus Graphics</name>
+    <id>ext.editor-api</id>
+    <name>Editor</name>
     <version>1.0.0</version>
     <extensions namespace="engine.core">
         <!--Provides a glfw window implementation that can be used externally-->
-        <window implementation="ext.graphics.GlfwWindow" width="720" height="480" vsync="true" title="EngineCore" center="true"/>
+        <window implementation="ext.graphics.GlfwWindow" width="720" height="480" vsync="true" title="EngineCore"
+                center="true"/>
     </extensions>
 </module>
