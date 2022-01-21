@@ -1,0 +1,12 @@
+<?xml version = "1.0"?>
+
+<module>
+    <id>engine.core</id>
+    <name>Nexus Core</name>
+    <version>1.0.0</version>
+    <extensions namespace="engine.core">
+        <window interface="engine.core.ext.Window"/>
+        <initialize interface="engine.core.ext.Initialize"/>
+        <initialize implementation="engine.core.Bootstrap"/>
+    </extensions>
+</module>
