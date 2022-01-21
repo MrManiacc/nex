@@ -1,4 +1,4 @@
-package engine.core.ext.event
+package engine.core.event
 
 /**
  * Passed along to the editor for when the window is created

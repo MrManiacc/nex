@@ -63,7 +63,8 @@ class Module(private val module: File, private val type: ModuleType) : Plugin {
                     log.debug { "Found and loaded manifest: $manifest at ${it.path}" }
                 }
                 it.isFile -> {
-                    resources[it.name] = it.toURI().toURL()
+                    val name = it.toRelativeString(module).replace(File.separator, "/")
+                    resources[name] = it.toURI().toURL()
                 }
             }
         }

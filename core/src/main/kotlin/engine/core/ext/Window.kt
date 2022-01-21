@@ -1,7 +1,5 @@
 package engine.core.ext
 
-import engine.core.project.Project
-
 /**
  * This is used for defining a window extension
  */
@@ -12,9 +10,10 @@ interface Window {
     var fullscreen: Boolean
     var title: String
     var center: Boolean
-    fun clear()
-    fun poll()
-    fun swap()
+
+    fun clearBuffer()
+    fun renderBuffer()
     fun isOpen(): Boolean
-    fun initWindow()
+    fun init()
+    fun dispose()
 }

@@ -1,2 +1,2 @@
 rootProject.name = "nexus"
-include("graphics", "core")
+include("glfw", "core", "editor")

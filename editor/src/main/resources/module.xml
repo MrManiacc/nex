@@ -1,11 +1,9 @@
 <?xml version = "1.0"?>
 <module>
-    <id>ext.editor-api</id>
+    <id>ext.editor</id>
     <name>Editor</name>
     <version>1.0.0</version>
     <extensions namespace="engine.core">
-        <!--Provides a glfw window implementation that can be used externally-->
-        <window implementation="ext.graphics.GlfwWindow" width="720" height="480" vsync="true" title="EngineCore"
-                center="true"/>
+        <updatable implementation="ext.gui.UI"  inject="true" subscribe="true"/>
     </extensions>
 </module>

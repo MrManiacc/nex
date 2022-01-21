@@ -29,6 +29,7 @@ open class BuildTask : DefaultTask() {
 
     @TaskAction
     fun perform() {
+        File(workspace).deleteRecursively()
         projects.forEach {
             println("resolving project ${it.name}")
             moveClassesAndResource(it)

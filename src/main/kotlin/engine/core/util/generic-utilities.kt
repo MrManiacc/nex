@@ -1,7 +1,6 @@
 package engine.core.util
 
 import kotlin.reflect.KMutableProperty
-import kotlin.reflect.full.declaredFunctions
 import kotlin.reflect.full.declaredMembers
 
 /**
@@ -34,4 +33,14 @@ internal fun Any.set(fieldName: String, value: Any): Boolean {
         }
     }
     return false
+}
+
+/**
+ * This will do ors of the given values.
+ */
+fun Int.orEquals(vararg ints: Int): Int {
+    var out = this
+    for (element in ints)
+        out = out or element
+    return out
 }

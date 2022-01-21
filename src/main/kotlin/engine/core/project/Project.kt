@@ -4,8 +4,10 @@ import engine.core.plugin.PluginClassloader
 import engine.core.plugin.PluginScanner
 import engine.core.plugin.PluginStore
 import engine.core.plugin.extensions.Namespace
+import engine.core.project.context.Registry
 import engine.core.util.call
 import mu.KotlinLogging
+import net.engio.mbassy.bus.MBassador
 import java.io.File
 import kotlin.reflect.KClass
 
@@ -20,11 +22,16 @@ class Project(val name: String, val directory: File) {
     private val loader = PluginClassloader()
     private val namespace = Namespace()
     private val instances = HashMap<KClass<*>, MutableList<Any>>()
+    private val eventbus = MBassador<Any>()
+    private val registry: Registry = Registry()
 
     /**
      * This loads the project
      */
     internal fun load() {
+        registry.add(this)
+        registry.add(eventbus)
+        registry.add(registry)
         log.info { "Starting scanning for project '$name" }
         PluginScanner.locate(directory, store)
         startResolution()
@@ -32,18 +39,10 @@ class Project(val name: String, val directory: File) {
         loader.define(store)
         namespace.resolve(store)
         namespace.load(loader)
-        namespace.initializeInstances(instances, this)
+        namespace.initializeInstances(instances, registry)
         initialize()
     }
 
-    /**
-     * This gets all extensions with the 'initialize' name and calls it's initialize method
-     */
-    private fun initialize() {
-        namespace.getInstances("initialize").forEach {
-            it.call("onInitialization", this)
-        }
-    }
 
     /**
      * This starts resolving all the libraries and module classes asynchronously
@@ -60,6 +59,15 @@ class Project(val name: String, val directory: File) {
     }
 
     /**
+     * This gets all extensions with the 'initialize' name and calls it's initialize method
+     */
+    private fun initialize() {
+        namespace.getInstances("initialize").forEach {
+            it.call("onInitialization", this)
+        }
+    }
+
+    /**
      * Gets all extensions for the given interface
      */
     @Suppress("UNCHECKED_CAST") fun <T : Any> extensionsFor(extensionInterface: KClass<T>): List<T> {
@@ -70,9 +78,20 @@ class Project(val name: String, val directory: File) {
     /**
      * Gets all extensions for the given interface
      */
+    inline fun <reified T : Any> extensionsFor(): List<T> = extensionsFor(T::class)
+
+    /**
+     * Gets all extensions for the given interface
+     */
     @Suppress("UNCHECKED_CAST") fun <T : Any> extensionFor(extensionInterface: KClass<T>): T? {
         val exts = extensionsFor(extensionInterface)
         if (exts.isEmpty()) return null
         return exts[0]
     }
+
+    /**
+     * Gets the given extension for the provided class
+     */
+    inline fun <reified T : Any> extensionFor(): T? = extensionFor(T::class)
+
 }

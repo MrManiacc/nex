@@ -3,13 +3,18 @@ package engine.core.plugin.extensions
 import engine.core.plugin.PluginClassloader
 import engine.core.plugin.PluginStore
 import engine.core.project.Project
+import engine.core.project.context.Inject
+import engine.core.project.context.Reflection
+import engine.core.project.context.Registry
 import mu.KotlinLogging
+import net.engio.mbassy.bus.MBassador
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.declaredMembers
+import kotlin.reflect.full.superclasses
 
 /**
  * A namespace is a group of ExtensionPoints
@@ -21,6 +26,7 @@ class Namespace {
     private val interfaceNames = HashMap<KClass<*>, String>()
     private val namedImplementations = HashMap<String, MutableList<Pair<KClass<*>, Extension>>>()
     private val namedInstances = HashMap<String, MutableList<Any>>()
+    private val extensionInstances = HashMap<Any, Extension>()
 
     /**
      * This will map all of the extensions correctly
@@ -59,15 +65,19 @@ class Namespace {
      * This instantiates the instances and returns a map with the interface as the key for
      * each instance
      */
-    fun initializeInstances(map: MutableMap<KClass<*>, MutableList<Any>>, project: Project) {
+    fun initializeInstances(map: MutableMap<KClass<*>, MutableList<Any>>, registry: Registry) {
         namedImplementations.forEach cont@{ name, impls ->
             val interfaceCls = namedInterfaces[name] ?: return@cont
             val list = map.computeIfAbsent(interfaceCls) { ArrayList() }
             val instances = namedInstances.computeIfAbsent(name) { ArrayList() }
             impls.forEach {
-                val instance = createInstance(it.first, it.second, project)
+                val instance = createInstance(it.first, it.second, registry)
                 list.add(instance)
                 instances.add(instance)
+            }
+            extensionInstances.forEach { (instance, extension) ->
+                if (extension.boolean("inject")) Reflection.inject(instance, registry)
+                if (extension.boolean("subscribe")) Reflection.subscribe(instance, registry)
             }
         }
     }
@@ -82,31 +92,34 @@ class Namespace {
      * Internally creates and initializes the instance.
      * TODO: try to map values to the constructors
      */
-    private fun createInstance(clazz: KClass<*>, extension: Extension, project: Project): Any {
+    private fun createInstance(clazz: KClass<*>, extension: Extension, registry: Registry): Any {
         val instance = clazz.createInstance()
+        extensionInstances[instance] = extension
+        if (extension.boolean("share")) share(instance, registry, extension.string("shareAs"))
         clazz.declaredMembers.forEach {
-            if (it is KMutableProperty) {
-                if (it.returnType.classifier == Project::class) {
-                    it.setter.call(instance, project)
-                }
-                if (extension.attributes.containsKey(it.name)) {
-                    val value = extension.attributes[it.name]!!
-                    when (it.returnType.classifier) {
-                        Int::class -> it.setter.call(instance, value.toInt())
-                        Long::class -> it.setter.call(instance, value.toLong())
-                        Boolean::class -> it.setter.call(instance, value.toBoolean())
-                        Double::class -> it.setter.call(instance, value.toDouble())
-                        Float::class -> it.setter.call(instance, value.toFloat())
-                        Short::class -> it.setter.call(instance, value.toShort())
-                        Byte::class -> it.setter.call(instance, value.toByte())
-                        String::class -> it.setter.call(instance, value)
-                    }
+            if (it is KMutableProperty && extension.has(it.name)) {
+                extension.ifPresent(it.returnType.classifier as KClass<*>, it.name) { attrib ->
+                    it.setter.call(instance, attrib)
                 }
             }
         }
         return instance
     }
 
+    private fun share(instance: Any, registry: Registry, shareAs: String? = null) {
+        val cls = instance::class
+        if (shareAs != null) {
+            for (it in cls.superclasses) {
+                if (it.qualifiedName == shareAs || it.simpleName == shareAs) {
+                    registry[it] = instance
+                    log.info { "Sharing instance of type '${cls.qualifiedName}' as supertype '${it.qualifiedName}'" }
+                }
+            }
+        } else {
+            registry.add(instance)
+            log.info { "Sharing instance of type '${cls.qualifiedName}'" }
+        }
+    }
 
     internal fun getClasses(name: String): List<KClass<*>> = namedImplementations[name]?.map { it.first } ?: emptyList()
 

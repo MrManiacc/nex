@@ -1,0 +1,11 @@
+<?xml version = "1.0"?>
+<module>
+    <id>ext.graphics</id>
+    <name>Nexus Graphics</name>
+    <version>1.0.0</version>
+    <extensions namespace="engine.core">
+        <!--Provides a glfw window implementation that can be used externally-->
+        <window implementation="ext.graphics.GlfwWindow" width="1080" height="720" vsync="false" title="EngineCore"
+                center="true" inject="true" subscribe="true" share="true" shareAs="engine.core.ext.Window"/>
+    </extensions>
+</module>

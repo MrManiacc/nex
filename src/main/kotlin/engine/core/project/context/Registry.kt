@@ -1,6 +1,6 @@
 @file:Suppress("UNCHECKED_CAST")
 
-package engine.core.project
+package engine.core.project.context
 
 import mu.KotlinLogging
 import kotlin.reflect.KClass
@@ -23,6 +23,13 @@ class Registry {
         }
         instances[instance::class] = instance
         return true
+    }
+
+    /**
+     * Adds the new instance if not already present, return true if put successfully
+     */
+    operator fun set(type: KClass<*>, instance: Any) {
+        instances[type] = instance
     }
 
     /**
@@ -54,6 +61,30 @@ class Registry {
         if (!map.containsKey(name)) return null
         return map[name]!! as T
     }
+
+    /**
+     * Executes the unit if the given type is present
+     */
+    fun <T : Any> ifPresent(type: KClass<T>, unit: (T) -> Unit) =
+        get(type)?.let(unit)
+
+    /**
+     * Executes the unit if the given type is present
+     */
+    inline fun <reified T : Any> ifPresent(noinline unit: (T) -> Unit) = ifPresent(T::class, unit)
+
+
+    /**
+     * Executes the unit if the given type is present
+     */
+    fun <T : Any> ifPresent(type: KClass<T>, name: String, unit: (T) -> Unit) =
+        get(type, name)?.let(unit)
+
+    /**
+     * Executes the unit if the given type is present
+     */
+    inline fun <reified T : Any> ifPresent(name: String, noinline unit: (T) -> Unit) = ifPresent(T::class, name, unit)
+
 
     /**
      * Gets all the named instances for the given type as well as the singleton instances

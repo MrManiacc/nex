@@ -6,6 +6,7 @@
     <version>1.0.0</version>
     <extensions namespace="engine.core">
         <window interface="engine.core.ext.Window"/>
+        <updatable interface="engine.core.ext.Updatable"/>
         <initialize interface="engine.core.ext.Initialize"/>
         <initialize implementation="engine.core.Bootstrap"/>
     </extensions>
