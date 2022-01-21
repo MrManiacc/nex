@@ -9,17 +9,16 @@ import kotlin.reflect.full.declaredMembers
  * @return if called
  */
 internal fun Any.call(methodName: String, value: Any): Boolean {
-    val cls = this::class
-    for (method in cls.declaredFunctions) {
-        if (method.name == methodName) {
-            method.parameters.forEach {
-                println(it.type.classifier)
-            }
-            method.call( this, value)
-            return true
-        }
+    val cls = this::class.java
+    return try {
+        val method = cls.getDeclaredMethod(methodName, value::class.java)
+        method.invoke(this, value)
+        true
+    } catch (ex: Exception) {
+        ex.printStackTrace()
+        print("failed to call method $methodName, msg - ${ex}")
+        false
     }
-    return false
 }
 
 /**

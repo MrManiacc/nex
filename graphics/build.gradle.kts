@@ -1,3 +1,5 @@
+import org.gradle.internal.os.OperatingSystem.*
+
 plugins {
     java
     kotlin("jvm")
@@ -7,7 +9,11 @@ group = "me.jraynor"
 version = "1.0-SNAPSHOT"
 
 val lwjglVersion = "3.3.0"
-val lwjglNatives = "natives-windows"
+val lwjglNatives = when (current()) {
+    WINDOWS -> "natives-windows"
+    MAC_OS -> "natives-macos"
+    else -> "natives-linux"
+}
 
 
 dependencies {

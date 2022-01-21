@@ -51,16 +51,20 @@ class Module(private val module: File, private val type: ModuleType) : Plugin {
      */
     private fun processDirectoryModule() {
         module.walkTopDown().forEach {
-            if (it.name.endsWith(".class")) {
-                val qualifiedName = it.toRelativeString(module)
-                    .replace("\\", ".")
-                    .substringBeforeLast(".")
-                classes[qualifiedName] = it.toURI().toURL()
-            } else if (it.name.equals(Manifest.MANIFEST_NAME)) {
-                manifest = ManifestReader.read(it)
-                log.debug { "Found and loaded manifest: $manifest at ${it.path}" }
-            } else if (it.isFile) {
-                resources[it.name] = it.toURI().toURL()
+            when {
+                it.name.endsWith(".class") -> {
+                    val qualifiedName = it.toRelativeString(module)
+                        .replace(File.separator, ".")
+                        .substringBeforeLast(".")
+                    classes[qualifiedName] = it.toURI().toURL()
+                }
+                it.name.equals(Manifest.MANIFEST_NAME) -> {
+                    manifest = ManifestReader.read(it)
+                    log.debug { "Found and loaded manifest: $manifest at ${it.path}" }
+                }
+                it.isFile -> {
+                    resources[it.name] = it.toURI().toURL()
+                }
             }
         }
     }

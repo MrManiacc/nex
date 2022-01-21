@@ -11,6 +11,7 @@ class NexusPlugin : Plugin<Project> {
      * @param target The target object
      */
     override fun apply(target: Project) {
-        target.tasks.create("PrepareNexus", BuildTask::class.java)
+        target.tasks.create("prepare", BuildTask::class.java).group = "nexus"
+        target.tasks.create("run", RunTask::class.java).group = "nexus"
     }
 }
